@@ -50,6 +50,8 @@
 #include <mali_kbase_trace_gpu_mem.h>
 #include <backend/gpu/mali_kbase_pm_internal.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 /* Threshold used to decide whether to flush full caches or just a physical range */
 #define KBASE_PA_RANGE_THRESHOLD_NR_PAGES 20
 #define MGM_DEFAULT_PTE_GROUP (0)
@@ -333,9 +335,16 @@ static void kbase_mmu_sync_pgd(struct kbase_device *kbdev, struct kbase_context 
 			       phys_addr_t phys, dma_addr_t handle, size_t size,
 			       enum kbase_mmu_op_type flush_op)
 {
-
-	kbase_mmu_sync_pgd_cpu(kbdev, handle, size);
-	kbase_mmu_sync_pgd_gpu(kbdev, kctx, phys, size, flush_op);
+	/* In non-coherent system, ensure the GPU can read
+	 * the pages from memory
+	 */
+#if IS_ENABLED(CONFIG_MALI_EXYNOS_LLC)
+	if (kbdev->system_coherency != COHERENCY_ACE)
+#else
+	if (kbdev->system_coherency == COHERENCY_NONE)
+#endif
+		dma_sync_single_for_device(kbdev->dev, handle, size,
+				DMA_TO_DEVICE);
 }
 
 /*
@@ -2529,6 +2538,10 @@ int kbase_mmu_insert_imported_pages(struct kbase_device *kbdev, struct kbase_mmu
 	/* Early out if there is nothing to do */
 	if (nr == 0)
 		return 0;
+
+	/* MALI_SEC_INTEGRATION */
+	if (!mali_exynos_get_gpu_power_state())
+		return;
 
 	/* Imported allocations don't have metadata and therefore always ignore the
 	 * page migration logic.
