@@ -22,6 +22,8 @@
 #include "backend/gpu/mali_kbase_cache_policy_backend.h"
 #include <device/mali_kbase_device.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 void kbase_cache_set_coherency_mode(struct kbase_device *kbdev, u32 mode)
 {
 
@@ -41,6 +43,9 @@ void kbase_cache_set_coherency_mode(struct kbase_device *kbdev, u32 mode)
 #else /* MALI_USE_CSF */
 	kbase_reg_write32(kbdev, GPU_CONTROL_ENUM(COHERENCY_ENABLE), mode);
 #endif /* MALI_USE_CSF */
+
+	mali_exynos_llc_set_awuser();
+	mali_exynos_llc_set_aruser();
 }
 
 void kbase_amba_set_shareable_cache_support(struct kbase_device *kbdev)

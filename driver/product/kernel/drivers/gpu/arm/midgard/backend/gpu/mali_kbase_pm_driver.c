@@ -57,6 +57,8 @@
 
 #include <linux/of.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 #ifdef CONFIG_MALI_CORESTACK
 bool corestack_driver_control = true;
 #else
@@ -2944,6 +2946,8 @@ bool kbase_pm_clock_off(struct kbase_device *kbdev)
 
 	KBASE_KTRACE_ADD(kbdev, PM_GPU_OFF, NULL, 0u);
 
+	mali_exynos_legacy_pm_exit_protected_mode(kbdev);
+
 	/* Disable interrupts. This also clears any outstanding interrupts */
 	kbase_pm_disable_interrupts(kbdev);
 	/* Ensure that any IRQ handlers have finished */
@@ -3059,6 +3063,8 @@ static int kbase_set_gpu_quirks(struct kbase_device *kbdev)
 		u32 coherency_features;
 
 		coherency_features = kbase_reg_read32(kbdev, GPU_CONTROL_ENUM(COHERENCY_FEATURES));
+
+		mali_exynos_coherency_set_coherency_feature();
 
 		/* (COHERENCY_ACE_LITE | COHERENCY_ACE) was incorrectly
 		 * documented for tMIx so force correct value here.

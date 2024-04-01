@@ -37,6 +37,8 @@
 #include <linux/of_platform.h>
 #include <linux/moduleparam.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 #define PRIV_DATA_REGDUMP(kbdev) \
 	(((struct kbasep_gpuprops_priv_data *)((kbdev)->gpu_props.priv_data))->regdump)
 
@@ -709,6 +711,10 @@ static void kbase_populate_user_data(struct kbase_device *kbdev, struct gpu_prop
 	data->raw_props.thread_features = regdump->thread_features;
 	data->raw_props.thread_tls_alloc = regdump->thread_tls_alloc;
 	data->raw_props.gpu_features = regdump->gpu_features;
+
+	/* EXYNOS TODO: this is only called once during init. may be there's a better place for this call? */
+	mali_exynos_llc_set_awuser();
+	mali_exynos_llc_set_aruser();
 
 }
 
