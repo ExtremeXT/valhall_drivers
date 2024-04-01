@@ -34,6 +34,8 @@
 #include <linux/of_platform.h>
 #include <linux/moduleparam.h>
 
+#include <mali_exynos_kbase_entrypoint.h>
+
 static void kbase_gpuprops_construct_coherent_groups(struct base_gpu_props *const props)
 {
 	struct mali_base_gpu_coherent_group *current_group;
@@ -489,6 +491,9 @@ int kbase_gpuprops_set_features(struct kbase_device *kbdev)
 	gpu_props->core_props.num_exec_engines =
 		KBASE_UBFX32(gpu_props->raw_props.core_features, 0, 4);
 #endif
+	/* EXYNOS TODO: this is only called once during init. may be there's a better place for this call? */
+	mali_exynos_llc_set_awuser();
+	mali_exynos_llc_set_aruser();
 
 	gpu_props->raw_props.thread_tls_alloc = regdump.thread_tls_alloc;
 	if (gpu_props->raw_props.thread_tls_alloc == 0)
